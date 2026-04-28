@@ -6,6 +6,10 @@ Real-time AI assistant for Meta Ray-Ban smart glasses. Sees what you see, hears 
 **Glasses:** Meta Ray-Ban (video via DAT SDK)  
 **AI:** Gemini Live API — native audio, no STT latency  
 
+<p align="center">
+  <img src="docs/screenshot.jpg" alt="Smart Glasses App" width="320">
+</p>
+
 ---
 
 ## Features
