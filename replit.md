@@ -1,53 +1,15 @@
 # Smart Glasses
 
-Real-time AI assistant for Meta Ray-Ban smart glasses — Android app + Node.js server.
+Android app for Meta Ray-Ban smart glasses — real-time AI assistant with Gemini Live.
 
 ## Project Structure
 
 ```
-server/                    # Node.js signaling + AI server
-├── index.js               # Main server (WebRTC signaling, HTTP, WebSocket)
-├── ai-providers.js        # Multi-provider AI (Anthropic, OpenAI, Gemini)
-├── telegram-bot.js        # Telegram bot integration
-├── twitch-restreamer.js   # Twitch RTMP streaming
-├── memory.js              # Persistent memory
-├── avito.js               # Avito scraping
-├── skills/                # AI skill modules
-├── public/                # Web frontend (index.html, settings.html, terminal.html)
-└── package.json
-
-CameraAccessAndroid/       # Android app (Kotlin/Jetpack Compose + Meta DAT SDK)
-
-docs/                      # Documentation assets (screenshots)
+CameraAccessAndroid/   # Android app (Kotlin/Jetpack Compose + Meta DAT SDK)
+docs/                  # Documentation assets (screenshots)
+index.js               # Minimal project info page (port 5000)
 ```
-
-## Tech Stack
-
-- **Backend**: Node.js, WebSocket (ws), HTTP server
-- **Frontend**: Vanilla HTML/CSS/JS (served from `server/public/`)
-- **AI**: Anthropic Claude, OpenAI, Google Gemini
-- **Streaming**: WebRTC (peer-to-peer), RTMP (Twitch)
-- **Mobile**: Android (Kotlin/Jetpack Compose)
-
-## Running the Server
-
-```bash
-cd server
-node index.js
-```
-
-Server runs on port 5000 (`0.0.0.0`).
-
-## Environment Variables
-
-- `PORT` - Server port (default: 5000)
-- `ANTHROPIC_API_KEY` - Anthropic Claude API key
-- `OPENAI_API_KEY` - OpenAI API key
-- `TELEGRAM_BOT_TOKEN` - Telegram bot token
-- `TURN_SERVER` - Custom TURN server hostname
-- `TURN_USERNAME` / `TURN_CREDENTIAL` - TURN auth credentials
-- `GEMINI_API_KEY` - Real Gemini API key (for Android Gemini Live proxy)
 
 ## Workflow
 
-- **Start application**: `cd server && node index.js` on port 5000
+- **Start application**: `node index.js` on port 5000 — serves a project info page

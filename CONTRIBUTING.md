@@ -13,21 +13,18 @@ This is a personal project, but pull requests are welcome.
 
 - Audio routing fixes for BLE/BT devices
 - Video pipeline performance improvements
-- Telegram bot improvements
 - Support for new glasses models
 
 ## Project structure
 
 ```
 CameraAccessAndroid/   # Android app
-server/                # Node.js server
 docs/                  # Documentation assets
 ```
 
 ## Local development
 
-Android: Android Studio, see `CameraAccessAndroid/README.md`  
-Server: `node server/index.js`
+Android: Android Studio, see `CameraAccessAndroid/README.md`
 
 ## Issues
 

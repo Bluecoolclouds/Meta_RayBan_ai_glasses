@@ -6,13 +6,8 @@ npm-debug.log*
 # Secrets & sensitive data
 **/Secrets.kt
 **/local.properties
-browser-cookies.json
 .env
 .env.*
-
-# Uploads & runtime data
-uploads/
-*.log
 
 # Replit
 replit.md
@@ -27,6 +22,3 @@ attached_assets/
 *.dex
 build/
 .gradle/
-
-# Docker
-docker/.env
