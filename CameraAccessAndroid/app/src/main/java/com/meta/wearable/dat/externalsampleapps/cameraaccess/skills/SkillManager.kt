@@ -56,6 +56,15 @@ object SkillManager {
 
     private var cameraAutoStopTimer: Timer? = null
 
+    // Triggers (vision-query / camera-on / camera-off) already fired this user turn — prevents
+    // re-firing on every transcript chunk now that checkActivation runs on accumulated text.
+    private val firedThisTurn = mutableSetOf<String>()
+
+    /** Call when the AI turn completes so the next user utterance starts with a clean slate. */
+    fun resetTurn() {
+        firedThisTurn.clear()
+    }
+
     // Tracks until when Gemini should receive video frames after a one-off vision question
     @Volatile private var visionQueryActiveUntil: Long = 0
 
@@ -149,7 +158,7 @@ object SkillManager {
         val lower = userText.lowercase().trim()
 
         // 1. Explicit camera ON command
-        if (CAMERA_START_PHRASES.any { lower.contains(it) }) {
+        if (CAMERA_START_PHRASES.any { lower.contains(it) } && firedThisTurn.add("camera_start")) {
             Log.d(TAG, "Camera START command detected")
             ensureCameraOn()
             scheduleCameraAutoStop(CAMERA_AUTO_STOP_MANUAL_MS)
@@ -157,7 +166,7 @@ object SkillManager {
         }
 
         // 2. Explicit camera OFF command
-        if (CAMERA_STOP_PHRASES.any { lower.contains(it) }) {
+        if (CAMERA_STOP_PHRASES.any { lower.contains(it) } && firedThisTurn.add("camera_stop")) {
             Log.d(TAG, "Camera STOP command detected")
             cancelCameraAutoStop()
             visionQueryActiveUntil = 0
@@ -167,7 +176,8 @@ object SkillManager {
 
         // 3. Vision query in regular conversation (no camera-needing skill active)
         if (_activeSkill?.needsCamera != true &&
-            VISION_QUERY_PHRASES.any { lower.contains(it) }) {
+            VISION_QUERY_PHRASES.any { lower.contains(it) } &&
+            firedThisTurn.add("vision_query")) {
             Log.d(TAG, "Vision query in regular mode — camera on for ${CAMERA_AUTO_STOP_VISION_MS / 1000}s, video window ${VISION_QUERY_WINDOW_MS / 1000}s")
             ensureCameraOn()
             scheduleCameraAutoStop(CAMERA_AUTO_STOP_VISION_MS)

@@ -84,6 +84,7 @@ class GeminiSessionViewModel(application: Application) : AndroidViewModel(applic
         }
         SkillManager.frameProvider = { latestVideoFrame }
         SkillManager.cameraActiveCheck = { isCameraActive() }
+        SkillManager.resetTurn()
         SkillManager.resumeTick()
 
         audioManager.onAudioCaptured = lambda@{ data ->
@@ -98,16 +99,24 @@ class GeminiSessionViewModel(application: Application) : AndroidViewModel(applic
 
         geminiService.onInterrupted = {
             audioManager.stopPlayback()
+            // An interrupted turn never reaches `onTurnComplete` in GeminiLiveService (early return),
+            // so reset the per-turn dedupe here too — otherwise the next utterance's camera/vision
+            // triggers would be silently suppressed by stale `firedThisTurn` entries.
+            SkillManager.resetTurn()
         }
 
         geminiService.onInputTranscription = { text ->
+            // Accumulate first, then run activation against the FULL accumulated transcript —
+            // Gemini delivers transcripts in tiny chunks (2-5 chars) so matching against a single
+            // chunk would never see whole phrases like "включи нарратора" or "что ты видишь".
+            val accumulated = _uiState.value.userTranscript + text
             _uiState.value = _uiState.value.copy(
-                userTranscript = _uiState.value.userTranscript + text,
+                userTranscript = accumulated,
                 aiTranscript = ""
             )
             // Refresh video window so windowed skills (e.g. CalorieSkill) get fresh frames on each utterance
             SkillManager.refreshSkillVideoWindow()
-            if (SkillManager.checkActivation(text)) {
+            if (SkillManager.checkActivation(accumulated)) {
                 val skillName = SkillManager.activeSkill?.name
                 Log.d(TAG, "Skill changed: $skillName — will reconnect after turn completes")
                 _uiState.value = _uiState.value.copy(activeSkillName = skillName)
@@ -129,6 +138,8 @@ class GeminiSessionViewModel(application: Application) : AndroidViewModel(applic
         geminiService.onTurnComplete = {
             val fullTurnText = currentAiTurnBuffer.toString()
             currentAiTurnBuffer.clear()
+            // Clear per-turn trigger dedupe so the next user utterance starts fresh
+            SkillManager.resetTurn()
             if (fullTurnText.contains("<memory_save")) {
                 extractAndSaveMemoryTags(fullTurnText)
             }

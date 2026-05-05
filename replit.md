@@ -57,6 +57,7 @@ _Populate as you build_
 - BT/BLE mics need `MODE_IN_COMMUNICATION` + `setCommunicationDevice` (+ `startBluetoothSco` for SCO) — `setPreferredDevice` alone is not enough. `MicLevelMonitor` and `gemini.AudioManager` both apply this; never overlap them with another recorder
 - Forcing TTS to a specific output device requires `synthesizeToFile` → `MediaPlayer.setPreferredDevice` (TextToSpeech itself has no per-call routing API)
 - `TwitchChatClient` caps history at 200 (`takeLast`) — any chat consumer must track messages by identity, not list size, or it goes silent after saturation
+- Gemini Live delivers user transcripts in tiny chunks (2-5 chars) — `SkillManager.checkActivation` must be called against the accumulated transcript, not per-chunk, or skill-activation phrases never match. `SkillManager.resetTurn()` must be called on each `onTurnComplete` to clear per-turn trigger dedupe
 
 ## Pointers
 

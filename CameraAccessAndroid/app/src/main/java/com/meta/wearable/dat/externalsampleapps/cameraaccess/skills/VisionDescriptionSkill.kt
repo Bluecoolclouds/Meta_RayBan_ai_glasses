@@ -18,13 +18,17 @@ class VisionDescriptionSkill : Skill {
 
     override val activationPhrases = listOf(
         "включи скилл что видишь", "включи описание", "включи режим описания",
-        "запусти описание", "начни описывать всё", "start vision skill",
-        "enable vision description", "start describing everything",
+        "запусти описание", "начни описывать всё", "начни описывать все",
+        "включи нарратор", "включи нарратора", "запусти нарратор", "запусти нарратора",
+        "режим нарратор", "режим нарратора", "нарратор сцен",
+        "start vision skill", "enable vision description",
+        "start describing everything", "start narrator", "enable narrator",
     )
 
     override val deactivationPhrases = listOf(
         "хватит описывать", "стоп описание", "останови описание",
-        "stop describing", "хватит", "enough",
+        "выключи нарратор", "выключи нарратора", "останови нарратор", "стоп нарратор",
+        "stop describing", "stop narrator", "хватит", "enough",
     )
 
     override val systemPromptBlock = """
