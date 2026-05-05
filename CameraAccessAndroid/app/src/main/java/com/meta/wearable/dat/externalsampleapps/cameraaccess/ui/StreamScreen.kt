@@ -137,11 +137,14 @@ fun StreamScreen(
     // Paused during Twitch/Gemini so the real recorder owns the mic exclusively —
     // critical for BLE/Bluetooth routing via setCommunicationDevice.
     LaunchedEffect(selectedMicId, twitchState.isStreaming, twitchState.isConnecting, geminiUiState.isGeminiActive) {
-        micMonitor.stop()
+        // Wait for routing cleanup to finish so the real recorder (Twitch/Gemini) can take
+        // ownership of MODE/SCO/communicationDevice without the monitor's deferred cleanup
+        // racing in afterwards and undoing it.
+        micMonitor.stopAndJoin()
         if (!twitchState.isStreaming && !twitchState.isConnecting && !geminiUiState.isGeminiActive) {
             val device = if (selectedMicId != 0)
                 AudioDeviceSelector.getDeviceInfoById(context, selectedMicId) else null
-            micMonitor.start(micScope, device)
+            micMonitor.start(micScope, context, device)
         }
     }
 
@@ -160,13 +163,50 @@ fun StreamScreen(
         }
     }
 
-    LaunchedEffect(chatMessages.size) {
-        if (!isTTSEnabled || chatMessages.isEmpty()) return@LaunchedEffect
-        val last = chatMessages.last()
-        if (geminiUiState.isModelSpeaking) {
-            if (pendingChatMessages.size < 5) pendingChatMessages.add(last)
-        } else {
-            chatTTSManager.speakMessage(last.username, last.text)
+    // Push the user-selected output device into ChatTTSManager so comments can be routed
+    // to phone speaker vs glasses independently of the system default. Re-applies whenever
+    // the setting changes (settings screen returns).
+    LaunchedEffect(SettingsManager.preferredOutputDeviceId) {
+        val id = SettingsManager.preferredOutputDeviceId
+        val dev = if (id != 0) AudioDeviceSelector.getOutputDeviceInfoById(context, id) else null
+        chatTTSManager.setOutputDevice(dev)
+    }
+
+    // Drive chat→TTS directly from the source flow (NOT lifecycle-aware). Using
+    // collectAsStateWithLifecycle here pauses the pipeline when the activity is STOPPED
+    // (window minimized), so new chat messages would never reach TTS. Subscribing to the
+    // source flow keeps the foreground service alive AND keeps reading new messages.
+    //
+    // Tracking is by message identity (the message object reference itself), NOT list size:
+    // TwitchChatClient caps history at 200 with takeLast(), so once the list saturates the
+    // size stays constant while new messages keep arriving — a size-based cursor would miss
+    // every new message after that point.
+    LaunchedEffect(twitchChatClient, isTTSEnabled) {
+        if (!isTTSEnabled) return@LaunchedEffect
+        var lastSpoken: com.meta.wearable.dat.externalsampleapps.cameraaccess.twitch.TwitchChatMessage? =
+            twitchChatClient.messages.value.lastOrNull()
+        twitchChatClient.messages.collect { msgs ->
+            if (msgs.isEmpty()) return@collect
+            val pivot = lastSpoken
+            val startIdx = if (pivot == null) {
+                msgs.size // first emission with seed → don't replay history
+            } else {
+                val idx = msgs.indexOf(pivot)
+                if (idx >= 0) idx + 1 else (msgs.size - 1).coerceAtLeast(0) // rotated past, speak only newest
+            }
+            if (startIdx >= msgs.size) {
+                lastSpoken = msgs.last()
+                return@collect
+            }
+            for (i in startIdx until msgs.size) {
+                val msg = msgs[i]
+                if (geminiViewModel.uiState.value.isModelSpeaking) {
+                    if (pendingChatMessages.size < 5) pendingChatMessages.add(msg)
+                } else {
+                    chatTTSManager.speakMessage(msg.username, msg.text)
+                }
+            }
+            lastSpoken = msgs.last()
         }
     }
 

@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -102,22 +103,30 @@ fun SettingsScreen(
     var youtubeStreamKey by remember { mutableStateOf(SettingsManager.youtubeStreamKey) }
     var customRtmpUrl by remember { mutableStateOf(SettingsManager.customRtmpUrl) }
     var selectedMicId by remember { mutableIntStateOf(SettingsManager.preferredMicDeviceId) }
+    var selectedOutputId by remember { mutableIntStateOf(SettingsManager.preferredOutputDeviceId) }
     var showResetDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     var audioDevices by remember { mutableStateOf(AudioDeviceSelector.getAvailableInputDevices(context)) }
+    var outputDevices by remember { mutableStateOf(AudioDeviceSelector.getAvailableOutputDevices(context)) }
 
     DisposableEffect(Unit) {
         val am = context.getSystemService(AudioManager::class.java)
         val callback = object : AudioDeviceCallback() {
             override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) {
                 audioDevices = AudioDeviceSelector.getAvailableInputDevices(context)
+                outputDevices = AudioDeviceSelector.getAvailableOutputDevices(context)
             }
             override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) {
                 audioDevices = AudioDeviceSelector.getAvailableInputDevices(context)
+                outputDevices = AudioDeviceSelector.getAvailableOutputDevices(context)
                 if (audioDevices.none { it.id == selectedMicId }) {
                     selectedMicId = 0
                     SettingsManager.preferredMicDeviceId = 0
+                }
+                if (outputDevices.none { it.id == selectedOutputId }) {
+                    selectedOutputId = 0
+                    SettingsManager.preferredOutputDeviceId = 0
                 }
             }
         }
@@ -135,6 +144,7 @@ fun SettingsScreen(
         SettingsManager.youtubeStreamKey = youtubeStreamKey.trim()
         SettingsManager.customRtmpUrl = customRtmpUrl.trim()
         SettingsManager.preferredMicDeviceId = selectedMicId
+        SettingsManager.preferredOutputDeviceId = selectedOutputId
     }
 
     fun reload() {
@@ -147,6 +157,7 @@ fun SettingsScreen(
         youtubeStreamKey = SettingsManager.youtubeStreamKey
         customRtmpUrl = SettingsManager.customRtmpUrl
         selectedMicId = SettingsManager.preferredMicDeviceId
+        selectedOutputId = SettingsManager.preferredOutputDeviceId
     }
 
     Column(
@@ -197,6 +208,15 @@ fun SettingsScreen(
                     onDeviceSelected = { id ->
                         selectedMicId = id
                         SettingsManager.preferredMicDeviceId = id
+                    },
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                AudioOutputSelectorCard(
+                    devices = outputDevices,
+                    selectedId = selectedOutputId,
+                    onDeviceSelected = { id ->
+                        selectedOutputId = id
+                        SettingsManager.preferredOutputDeviceId = id
                     },
                 )
             }
@@ -525,6 +545,70 @@ private fun MicrophoneSelectorCard(
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Audio Input", fontSize = 12.sp) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(
+                        color = Color.White,
+                        fontSize = 14.sp,
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MetaBlue,
+                        unfocusedBorderColor = DividerColor,
+                        focusedLabelColor = MetaBlue,
+                        unfocusedLabelColor = SubtleText,
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                ) {
+                    devices.forEach { device ->
+                        DropdownMenuItem(
+                            text = { Text(device.name) },
+                            onClick = {
+                                onDeviceSelected(device.id)
+                                expanded = false
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AudioOutputSelectorCard(
+    devices: List<com.meta.wearable.dat.externalsampleapps.cameraaccess.audio.AudioInputDevice>,
+    selectedId: Int,
+    onDeviceSelected: (Int) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedDevice = devices.firstOrNull { it.id == selectedId } ?: devices.first()
+
+    SettingsCard {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SettingsIconBadge(Icons.Default.VolumeUp, IconBgTeal)
+            Spacer(modifier = Modifier.width(12.dp))
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded },
+                modifier = Modifier.weight(1f),
+            ) {
+                OutlinedTextField(
+                    value = selectedDevice.name,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Audio Output (Gemini & Chat TTS)", fontSize = 12.sp) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     modifier = Modifier
                         .menuAnchor()

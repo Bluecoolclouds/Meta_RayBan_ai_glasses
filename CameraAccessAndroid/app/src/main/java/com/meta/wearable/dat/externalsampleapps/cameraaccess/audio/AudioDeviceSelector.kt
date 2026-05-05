@@ -69,6 +69,55 @@ object AudioDeviceSelector {
             .firstOrNull { it.id == deviceId }
     }
 
+    /** Output devices for choosing where Gemini/TTS audio plays (phone speaker vs glasses). */
+    fun getAvailableOutputDevices(context: Context): List<AudioInputDevice> {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+
+        val result = mutableListOf(AudioInputDevice.SYSTEM_DEFAULT)
+
+        for (device in devices) {
+            // Skip telephony / unrelated outputs to keep the list short and useful.
+            if (device.type == AudioDeviceInfo.TYPE_TELEPHONY) continue
+            val name = buildOutputDeviceName(device)
+            result.add(AudioInputDevice(id = device.id, name = name, type = device.type))
+        }
+
+        Log.d(TAG, "Found ${result.size} output devices: ${result.map { it.name }}")
+        return result
+    }
+
+    fun getOutputDeviceInfoById(context: Context, deviceId: Int): AudioDeviceInfo? {
+        if (deviceId == 0) return null
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        return audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            .firstOrNull { it.id == deviceId }
+    }
+
+    private fun buildOutputDeviceName(device: AudioDeviceInfo): String {
+        val productName = device.productName?.toString()?.takeIf { it.isNotBlank() && it != "0" }
+        val typeName = outputTypeToString(device.type)
+        return when {
+            productName != null && productName.lowercase() !in setOf("android", "phone") -> "$productName ($typeName)"
+            else -> typeName
+        }
+    }
+
+    private fun outputTypeToString(type: Int): String = when (type) {
+        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> "Phone Speaker"
+        AudioDeviceInfo.TYPE_BUILTIN_EARPIECE -> "Earpiece"
+        AudioDeviceInfo.TYPE_WIRED_HEADSET -> "Wired Headset"
+        AudioDeviceInfo.TYPE_WIRED_HEADPHONES -> "Wired Headphones"
+        AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> "Bluetooth SCO"
+        AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> "Bluetooth A2DP"
+        AudioDeviceInfo.TYPE_USB_DEVICE -> "USB Device"
+        AudioDeviceInfo.TYPE_USB_HEADSET -> "USB Headset"
+        AudioDeviceInfo.TYPE_BLE_HEADSET -> "BLE Headset"
+        AudioDeviceInfo.TYPE_BLE_SPEAKER -> "BLE Speaker"
+        AudioDeviceInfo.TYPE_HEARING_AID -> "Hearing Aid"
+        else -> "Audio Output (type=$type)"
+    }
+
     private fun buildDeviceName(device: AudioDeviceInfo): String {
         val productName = device.productName?.toString()?.takeIf { it.isNotBlank() && it != "0" }
         val typeName = typeToString(device.type)

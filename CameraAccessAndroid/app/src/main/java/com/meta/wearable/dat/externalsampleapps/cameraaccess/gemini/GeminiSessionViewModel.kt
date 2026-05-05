@@ -209,7 +209,15 @@ class GeminiSessionViewModel(application: Application) : AndroidViewModel(applic
                                 else Log.w(TAG, "Preferred mic id=$preferredDeviceId not found, falling back to default")
                             }
                     } else null
-                    audioManager.startCapture(getApplication(), preferredDevice)
+                    val preferredOutputId = SettingsManager.preferredOutputDeviceId
+                    val preferredOutputDevice = if (preferredOutputId != 0) {
+                        AudioDeviceSelector.getOutputDeviceInfoById(getApplication(), preferredOutputId)
+                            .also { device ->
+                                if (device != null) Log.d(TAG, "Using preferred output: ${device.productName} (id=$preferredOutputId)")
+                                else Log.w(TAG, "Preferred output id=$preferredOutputId not found, falling back to default")
+                            }
+                    } else null
+                    audioManager.startCapture(getApplication(), preferredDevice, preferredOutputDevice)
                 } catch (e: Exception) {
                     _uiState.value = _uiState.value.copy(
                         errorMessage = "Mic capture failed: ${e.message}"

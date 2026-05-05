@@ -67,6 +67,12 @@ object SettingsManager {
         get() = prefs.getInt("preferredMicDeviceId", 0)
         set(value) = prefs.edit().putInt("preferredMicDeviceId", value).apply()
 
+    /** 0 = system default; otherwise AudioDeviceInfo.id of the chosen output (phone speaker, BT, etc.).
+     *  Applied to Gemini AudioTrack and Chat TTS playback. */
+    var preferredOutputDeviceId: Int
+        get() = prefs.getInt("preferredOutputDeviceId", 0)
+        set(value) = prefs.edit().putInt("preferredOutputDeviceId", value).apply()
+
     /** 0 = auto (2000 kbps) */
     var streamBitrateKbps: Int
         get() = prefs.getInt("streamBitrateKbps", 0)

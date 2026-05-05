@@ -54,6 +54,9 @@ _Populate as you build_
 - `Secrets.kt` must exist before building the Android app — copy from `Secrets.kt.example` and fill in values
 - GitHub Packages token (`gpr.token`) is required in `local.properties` to resolve the Meta DAT SDK during Gradle sync
 - The Replit web preview shows the Node.js info page only — the actual Android app runs on a physical device or emulator
+- BT/BLE mics need `MODE_IN_COMMUNICATION` + `setCommunicationDevice` (+ `startBluetoothSco` for SCO) — `setPreferredDevice` alone is not enough. `MicLevelMonitor` and `gemini.AudioManager` both apply this; never overlap them with another recorder
+- Forcing TTS to a specific output device requires `synthesizeToFile` → `MediaPlayer.setPreferredDevice` (TextToSpeech itself has no per-call routing API)
+- `TwitchChatClient` caps history at 200 (`takeLast`) — any chat consumer must track messages by identity, not list size, or it goes silent after saturation
 
 ## Pointers
 

@@ -52,7 +52,11 @@ class AudioManager {
     private var modeChanged = false
 
     @SuppressLint("MissingPermission")
-    fun startCapture(context: Context? = null, preferredDevice: AudioDeviceInfo? = null) {
+    fun startCapture(
+        context: Context? = null,
+        preferredDevice: AudioDeviceInfo? = null,
+        preferredOutputDevice: AudioDeviceInfo? = null,
+    ) {
         if (isCapturing) return
 
         val isBtSco = preferredDevice != null && preferredDevice.type in BT_SCO_TYPES
@@ -139,6 +143,11 @@ class AudioManager {
             audioRecord?.release()
             audioRecord = null
             return
+        }
+
+        if (preferredOutputDevice != null) {
+            val ok = audioTrack?.setPreferredDevice(preferredOutputDevice)
+            Log.d(TAG, "AudioTrack.setPreferredDevice '${preferredOutputDevice.productName}' (type=${preferredOutputDevice.type}): $ok")
         }
 
         audioRecord?.startRecording()
