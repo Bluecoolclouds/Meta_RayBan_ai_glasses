@@ -2,6 +2,7 @@
 type ModuleMap = Record<string, () => Promise<Record<string, unknown>>>;
 export const modules: ModuleMap = {
   "./components/mockups/epicure-upload/EpicureScreen.tsx": () => import("../components/mockups/epicure-upload/EpicureScreen.tsx"),
+  "./components/mockups/epicure-upload/LoadingScreen.tsx": () => import("../components/mockups/epicure-upload/LoadingScreen.tsx"),
   "./components/mockups/epicure-upload/ProScreen.tsx": () => import("../components/mockups/epicure-upload/ProScreen.tsx"),
   "./components/mockups/epicure-upload/ResultsBlock.tsx": () => import("../components/mockups/epicure-upload/ResultsBlock.tsx"),
   "./components/mockups/epicure-upload/VisionBlock.tsx": () => import("../components/mockups/epicure-upload/VisionBlock.tsx"),
