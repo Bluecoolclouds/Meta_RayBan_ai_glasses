@@ -5,10 +5,9 @@ import {
   ChefHat, Flame, CheckCircle2, BookOpen,
   Carrot, Beef, Cake, Apple, Fish, Egg,
   Cherry, Grape, Cookie, Croissant, Pizza,
-  Sandwich, Wheat, Citrus, Banana,
+  Sandwich, Wheat, Citrus, Banana, Bot,
 } from "lucide-react";
 
-// ─── Ticker ───────────────────────────────────────────────────────────────────
 const TICKER_ICONS = [
   Fish, Carrot, Beef, Apple, Cake, Egg,
   Cherry, Grape, Cookie, Croissant, Pizza,
@@ -52,20 +51,20 @@ function IngredientTicker() {
   );
 }
 
-// ─── Recipe data ──────────────────────────────────────────────────────────────
 const RECIPE = {
   title: "Citrus-Dill Salmon with Caper Cream",
   time: "25 min",
   serves: "2",
   difficulty: "Easy",
-  score: 94,
+  pairingPercentile: "≥p90",
+  pairingLabel: "very high",
   ingredients: [
     { amount: "2 fillets", name: "Salmon (200g each)" },
-    { amount: "1", name: "Lemon, zested & juiced" },
-    { amount: "2 tbsp", name: "Fresh dill, chopped" },
-    { amount: "1 tbsp", name: "Capers, drained" },
-    { amount: "100g", name: "Cream cheese" },
-    { amount: "1 tbsp", name: "Olive oil" },
+    { amount: "1",         name: "Lemon, zested & juiced" },
+    { amount: "2 tbsp",    name: "Fresh dill, chopped" },
+    { amount: "1 tbsp",    name: "Capers, drained" },
+    { amount: "100g",      name: "Cream cheese" },
+    { amount: "1 tbsp",    name: "Olive oil" },
   ],
   steps: [
     "Pat salmon dry and season with salt, pepper, and lemon zest.",
@@ -73,23 +72,21 @@ const RECIPE = {
     "Mix cream cheese, capers, dill, and lemon juice into a sauce.",
     "Plate salmon, spoon caper cream alongside. Garnish with fresh dill.",
   ],
+  mcpSources: ["find_pairings", "pairing_score", "cultural_profile"],
 };
 
-// ─── Component ───────────────────────────────────────────────────────────────
 export function RecipeCard() {
   const [saved, setSaved] = useState(true);
   const [tab, setTab] = useState<"ingredients" | "steps">("ingredients");
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "#111" }}>
-      {/* Phone frame */}
       <div className="relative overflow-hidden flex flex-col" style={{
         width: 390, height: 844, borderRadius: 48,
         background: "#0a0a0a", border: "10px solid #1c1c1c",
         boxShadow: "0 40px 80px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.06)",
       }}>
 
-        {/* Status bar */}
         <div className="flex items-center justify-between px-6 pt-4 pb-2 flex-shrink-0">
           <span className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>9:41</span>
           <div className="w-24 h-6 rounded-full" style={{
@@ -103,7 +100,6 @@ export function RecipeCard() {
           </div>
         </div>
 
-        {/* Nav */}
         <div className="flex items-center justify-between px-5 pt-2 pb-3 flex-shrink-0">
           <button className="p-2 -ml-2" style={{ color: "rgba(255,255,255,0.5)" }}>
             <ChevronLeft className="w-5 h-5" />
@@ -114,7 +110,6 @@ export function RecipeCard() {
             <Sparkles className="w-3.5 h-3.5" style={{ color: "#86efac" }} />
             <span className="text-xs font-semibold" style={{ color: "#86efac" }}>Generated recipe</span>
           </div>
-          {/* Action buttons */}
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setSaved(!saved)}
@@ -140,7 +135,6 @@ export function RecipeCard() {
           </div>
         </div>
 
-        {/* Recipe header card */}
         <div className="mx-5 mb-3 px-4 py-3 rounded-2xl flex-shrink-0" style={{
           background: "rgba(134,239,172,0.05)",
           border: "1px solid rgba(134,239,172,0.12)",
@@ -149,19 +143,24 @@ export function RecipeCard() {
             <h2 className="text-base font-bold leading-tight flex-1" style={{ color: "#fff" }}>
               {RECIPE.title}
             </h2>
-            <div className="flex-shrink-0 px-2 py-1 rounded-full text-[11px] font-bold" style={{
-              background: "rgba(134,239,172,0.15)",
-              color: "#86efac",
-              border: "1px solid rgba(134,239,172,0.2)",
-            }}>
-              {RECIPE.score}%
+            <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
+              <div className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{
+                background: "rgba(134,239,172,0.15)",
+                color: "#86efac",
+                border: "1px solid rgba(134,239,172,0.2)",
+              }}>
+                {RECIPE.pairingPercentile}
+              </div>
+              <span className="text-[9px]" style={{ color: "rgba(134,239,172,0.5)" }}>
+                pairing score
+              </span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mb-2">
             {[
-              { Icon: Clock, val: RECIPE.time },
-              { Icon: Users, val: `${RECIPE.serves} servings` },
-              { Icon: Flame, val: RECIPE.difficulty },
+              { Icon: Clock,    val: RECIPE.time },
+              { Icon: Users,    val: `${RECIPE.serves} servings` },
+              { Icon: Flame,    val: RECIPE.difficulty },
             ].map(({ Icon, val }) => (
               <div key={val} className="flex items-center gap-1">
                 <Icon className="w-3 h-3" style={{ color: "rgba(255,255,255,0.3)" }} />
@@ -169,13 +168,26 @@ export function RecipeCard() {
               </div>
             ))}
           </div>
+          <div className="flex items-center gap-1.5 pt-1.5" style={{
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+          }}>
+            <Bot className="w-3 h-3" style={{ color: "rgba(134,239,172,0.5)" }} />
+            <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.25)" }}>
+              Written by Gemini · MCP:
+            </span>
+            {RECIPE.mcpSources.map(src => (
+              <span key={src} className="text-[9px] px-1.5 py-0.5 rounded" style={{
+                background: "rgba(134,239,172,0.07)",
+                color: "rgba(134,239,172,0.55)",
+              }}>{src}</span>
+            ))}
+          </div>
         </div>
 
-        {/* Tab switcher */}
         <div className="px-5 mb-3 flex gap-1.5 flex-shrink-0">
           {([
-            { key: "ingredients", Icon: ChefHat, label: "Ingredients" },
-            { key: "steps",       Icon: BookOpen, label: "Method" },
+            { key: "ingredients", Icon: ChefHat,   label: "Ingredients" },
+            { key: "steps",       Icon: BookOpen,   label: "Method" },
           ] as const).map(({ key, Icon, label }) => (
             <button
               key={key}
@@ -193,7 +205,6 @@ export function RecipeCard() {
           ))}
         </div>
 
-        {/* Tab content */}
         <div className="flex-1 px-5 overflow-y-auto" style={{ minHeight: 0 }}>
 
           {tab === "ingredients" && (
@@ -251,7 +262,6 @@ export function RecipeCard() {
           <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}`}</style>
         </div>
 
-        {/* Bottom ticker */}
         <div className="px-5 pt-3 pb-3 flex-shrink-0">
           <IngredientTicker />
           <p className="text-center text-[10px] mt-1.5" style={{ color: "rgba(255,255,255,0.18)" }}>
@@ -259,7 +269,6 @@ export function RecipeCard() {
           </p>
         </div>
 
-        {/* Home indicator */}
         <div className="flex-shrink-0 pb-2 flex justify-center">
           <div className="rounded-full" style={{ width: 120, height: 5, background: "rgba(255,255,255,0.25)" }} />
         </div>

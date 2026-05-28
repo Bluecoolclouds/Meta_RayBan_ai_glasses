@@ -5,48 +5,46 @@ import {
   Check, Sparkles,
 } from "lucide-react";
 
-// ─── Step data ───────────────────────────────────────────────────────────────
-
 const CUISINES = [
-  { label: "Italian", emoji: "🍝" },
-  { label: "Japanese", emoji: "🍣" },
-  { label: "French", emoji: "🥐" },
-  { label: "Mexican", emoji: "🌮" },
-  { label: "Indian", emoji: "🍛" },
-  { label: "Mediterranean", emoji: "🫒" },
+  { label: "Japanese",      emoji: "🍣", mcp: "Japanese" },
+  { label: "Mediterranean", emoji: "🫒", mcp: "Mediterranean" },
+  { label: "East Asian",    emoji: "🥢", mcp: "East_Asian" },
+  { label: "Latin",         emoji: "🌮", mcp: "Latin_American" },
+  { label: "South Asian",   emoji: "🍛", mcp: "South_Asian" },
+  { label: "SE Asian",      emoji: "🥥", mcp: "Southeast_Asian" },
+  { label: "E. European",   emoji: "🥟", mcp: "Eastern_European" },
+  { label: "Atlantic",      emoji: "🐟", mcp: "Western_Atlantic" },
 ];
 
 const MOODS = [
-  { label: "Comfort", emoji: "🫂" },
-  { label: "Light", emoji: "🥗" },
-  { label: "Festive", emoji: "🥂" },
-  { label: "Quick", emoji: "⚡" },
+  { label: "Comfort",  emoji: "🫂" },
+  { label: "Light",    emoji: "🥗" },
+  { label: "Festive",  emoji: "🥂" },
+  { label: "Quick",    emoji: "⚡" },
   { label: "Romantic", emoji: "🕯️" },
-  { label: "Spicy", emoji: "🌶️" },
+  { label: "Spicy",    emoji: "🌶️" },
 ];
 
 const BASE_INGREDIENTS = [
-  { label: "Salmon", Icon: Fish, color: "#f97316" },
+  { label: "Salmon",  Icon: Fish,  color: "#f97316" },
   { label: "Chicken", Icon: Flame, color: "#eab308" },
-  { label: "Lentils", Icon: Leaf, color: "#22c55e" },
-  { label: "Pasta", Icon: Wheat, color: "#a78bfa" },
-  { label: "Tofu", Icon: Leaf, color: "#34d399" },
-  { label: "Cheese", Icon: Milk, color: "#fbbf24" },
-  { label: "Eggs", Icon: Egg, color: "#fb923c" },
-  { label: "Shrimp", Icon: Fish, color: "#f43f5e" },
+  { label: "Lentils", Icon: Leaf,  color: "#22c55e" },
+  { label: "Pasta",   Icon: Wheat, color: "#a78bfa" },
+  { label: "Tofu",    Icon: Leaf,  color: "#34d399" },
+  { label: "Cheese",  Icon: Milk,  color: "#fbbf24" },
+  { label: "Eggs",    Icon: Egg,   color: "#fb923c" },
+  { label: "Shrimp",  Icon: Fish,  color: "#f43f5e" },
 ];
 
 const SUGGESTIONS = [
-  { name: "Lemon & Dill", score: 96, why: "Classic Nordic pairing" },
-  { name: "Miso & Ginger", score: 91, why: "Umami depth contrast" },
-  { name: "Capers & Cream", score: 88, why: "Briny richness balance" },
-  { name: "Avocado & Lime", score: 84, why: "Creamy acid harmony" },
+  { name: "Tarragon & White Wine", percentile: "p90+", why: "Dense herb cluster — top bridge" },
+  { name: "Olive Oil & Thyme",     percentile: "p90+", why: "Bridge: 7 of 8 primaries" },
+  { name: "Mint & Orange",         percentile: "≥p75", why: "Citrus-herb cluster contrast" },
+  { name: "Mustard & Capers",      percentile: "≥p75", why: "Brine + acid balance" },
 ];
 
-// ─── Component ───────────────────────────────────────────────────────────────
-
 export function WizardScreen() {
-  const [step, setStep] = useState(0); // 0 cuisine, 1 mood, 2 base, 3 results
+  const [step, setStep] = useState(0);
   const [vegetarian, setVegetarian] = useState(false);
   const [plantBased, setPlantBased] = useState(false);
   const [cuisine, setCuisine] = useState<string | null>(null);
@@ -64,7 +62,6 @@ export function WizardScreen() {
     <div className="min-h-screen flex items-center justify-center p-6"
       style={{ background: "#111" }}>
 
-      {/* Phone frame */}
       <div className="relative overflow-hidden flex flex-col"
         style={{
           width: 390, height: 844, borderRadius: 48,
@@ -72,7 +69,6 @@ export function WizardScreen() {
           boxShadow: "0 40px 80px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.06)",
         }}>
 
-        {/* Status bar */}
         <div className="flex items-center justify-between px-6 pt-4 pb-2 flex-shrink-0">
           <span className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>9:41</span>
           <div className="w-24 h-6 rounded-full" style={{
@@ -86,7 +82,6 @@ export function WizardScreen() {
           </div>
         </div>
 
-        {/* Nav */}
         <div className="flex items-center justify-between px-5 pt-2 pb-3 flex-shrink-0">
           <button className="p-2 -ml-2" style={{ color: "rgba(255,255,255,0.5)" }}>
             <ChevronLeft className="w-5 h-5" />
@@ -100,10 +95,9 @@ export function WizardScreen() {
           <div className="w-9" />
         </div>
 
-        {/* Toggles row */}
         <div className="flex items-center justify-end gap-4 px-5 mb-4 flex-shrink-0">
           {[
-            { label: "Veg", val: vegetarian, set: setVegetarian },
+            { label: "Veg",   val: vegetarian, set: setVegetarian },
             { label: "Plant", val: plantBased, set: setPlantBased },
           ].map(({ label, val, set }) => (
             <button key={label} onClick={() => set(!val)} className="flex items-center gap-1.5">
@@ -121,7 +115,6 @@ export function WizardScreen() {
           ))}
         </div>
 
-        {/* Step indicator */}
         <div className="flex items-center gap-0 px-5 mb-5 flex-shrink-0">
           {stepLabels.map((label, i) => {
             const done = i < step;
@@ -152,45 +145,45 @@ export function WizardScreen() {
           })}
         </div>
 
-        {/* ── Step content ── */}
         <div className="flex-1 px-5 overflow-hidden flex flex-col" style={{ minHeight: 0 }}>
 
-          {/* Step 0 — Cuisine */}
           {step === 0 && (
             <div className="flex flex-col h-full">
               <p className="text-base font-semibold mb-1" style={{ color: "#fff" }}>
                 What cuisine inspires you?
               </p>
-              <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
-                Sets the flavour context for pairings
+              <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.35)" }}>
+                Sets the morph direction for <code style={{ color: "#c4b5fd", fontSize: 10 }}>find_pairings</code>
               </p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {CUISINES.map(({ label, emoji }) => (
                   <button key={label} onClick={() => setCuisine(label)}
-                    className="flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all duration-200"
+                    className="flex flex-col items-center gap-1 py-2.5 rounded-2xl transition-all duration-200"
                     style={{
                       background: cuisine === label ? "rgba(196,181,253,0.12)" : "rgba(255,255,255,0.04)",
                       border: `1.5px solid ${cuisine === label ? "rgba(196,181,253,0.45)" : "rgba(255,255,255,0.07)"}`,
                       boxShadow: cuisine === label ? "0 0 14px rgba(196,181,253,0.15)" : "none",
                     }}>
-                    <span className="text-2xl">{emoji}</span>
-                    <span className="text-[11px] font-medium" style={{
+                    <span className="text-xl">{emoji}</span>
+                    <span className="text-[10px] font-medium leading-tight text-center" style={{
                       color: cuisine === label ? "#c4b5fd" : "rgba(255,255,255,0.55)",
                     }}>{label}</span>
                   </button>
                 ))}
               </div>
+              <p className="text-[10px] mt-2" style={{ color: "rgba(255,255,255,0.2)" }}>
+                Powered by MCP <code style={{ color: "rgba(196,181,253,0.5)" }}>morph(seed, target: direction)</code>
+              </p>
             </div>
           )}
 
-          {/* Step 1 — Mood */}
           {step === 1 && (
             <div className="flex flex-col h-full">
               <p className="text-base font-semibold mb-1" style={{ color: "#fff" }}>
                 What's the occasion?
               </p>
               <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
-                Guides texture and intensity of pairings
+                Guides intensity — passed to Gemini as context
               </p>
               <div className="grid grid-cols-3 gap-2">
                 {MOODS.map(({ label, emoji }) => (
@@ -211,7 +204,6 @@ export function WizardScreen() {
             </div>
           )}
 
-          {/* Step 2 — Base ingredient */}
           {step === 2 && (
             <div className="flex flex-col h-full">
               <p className="text-base font-semibold mb-1" style={{ color: "#fff" }}>
@@ -239,7 +231,6 @@ export function WizardScreen() {
             </div>
           )}
 
-          {/* Step 3 — Results */}
           {step === 3 && (
             <div className="flex flex-col h-full">
               <div className="flex items-center gap-2 mb-1">
@@ -248,11 +239,14 @@ export function WizardScreen() {
                   Wizard Pairings
                 </p>
               </div>
-              <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
+              <p className="text-xs mb-1" style={{ color: "rgba(255,255,255,0.35)" }}>
                 {cuisine} · {mood} · {base}
               </p>
+              <p className="text-[10px] mb-3" style={{ color: "rgba(255,255,255,0.2)" }}>
+                via <code style={{ color: "rgba(196,181,253,0.5)" }}>find_pairings</code> BRIDGES
+              </p>
               <div className="flex flex-col gap-2.5">
-                {SUGGESTIONS.map(({ name, score, why }, i) => (
+                {SUGGESTIONS.map(({ name, percentile, why }, i) => (
                   <div key={name} className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{
                     background: "rgba(255,255,255,0.04)",
                     border: "1px solid rgba(255,255,255,0.07)",
@@ -264,14 +258,12 @@ export function WizardScreen() {
                       <p className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>{name}</p>
                       <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{why}</p>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-xs font-bold" style={{ color: "#c4b5fd" }}>{score}%</span>
-                      <div className="h-1 w-12 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
-                        <div className="h-full rounded-full" style={{
-                          width: `${score}%`,
-                          background: "linear-gradient(90deg, #c4b5fd, #a78bfa)",
-                        }} />
-                      </div>
+                    <div className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{
+                      background: "rgba(196,181,253,0.1)",
+                      border: "1px solid rgba(196,181,253,0.2)",
+                      color: "#c4b5fd",
+                    }}>
+                      {percentile}
                     </div>
                   </div>
                 ))}
@@ -281,7 +273,6 @@ export function WizardScreen() {
 
         </div>
 
-        {/* Bottom nav */}
         <div className="px-5 pb-3 pt-3 flex gap-2 flex-shrink-0">
           {step > 0 && (
             <button
@@ -326,7 +317,6 @@ export function WizardScreen() {
           )}
         </div>
 
-        {/* Home indicator */}
         <div className="flex-shrink-0 pb-2 flex justify-center">
           <div className="rounded-full" style={{ width: 120, height: 5, background: "rgba(255,255,255,0.25)" }} />
         </div>
