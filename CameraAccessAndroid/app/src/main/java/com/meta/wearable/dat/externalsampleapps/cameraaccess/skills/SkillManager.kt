@@ -142,6 +142,7 @@ object SkillManager {
         registeredSkills.add(TranslateSignSkill())
         registeredSkills.add(CalorieSkill())
         registeredSkills.add(CookingModeSkill())
+        registeredSkills.add(EpicureSkill())
         CalorieSkill.init(context)
         Log.d(TAG, "Initialized with ${registeredSkills.size} skills: ${registeredSkills.map { it.id }}")
     }
@@ -250,10 +251,11 @@ object SkillManager {
         if (!initialized) return
         _activeSkill?.onAiOutput(aiText)
 
-        val regex = Regex("<calorie_log>(.*?)</calorie_log>", RegexOption.DOT_MATCHES_ALL)
-        val match = regex.find(aiText)
-        if (match != null) {
-            val raw = match.groupValues[1].trim()
+        // ── Calorie logging ──────────────────────────────────────────────
+        val calorieRegex = Regex("<calorie_log>(.*?)</calorie_log>", RegexOption.DOT_MATCHES_ALL)
+        val calorieMatch = calorieRegex.find(aiText)
+        if (calorieMatch != null) {
+            val raw = calorieMatch.groupValues[1].trim()
             val cleaned = raw
                 .replace(Regex("^```(?:json)?\\s*", RegexOption.MULTILINE), "")
                 .replace(Regex("```\\s*$", RegexOption.MULTILINE), "")
@@ -270,6 +272,36 @@ object SkillManager {
             } else {
                 CalorieRepository.addMealFromLegacy(raw)
             }
+        }
+
+        // ── Epicure ingredient scan ──────────────────────────────────────
+        val scanRegex = Regex("<epicure_scan>(.*?)</epicure_scan>", RegexOption.DOT_MATCHES_ALL)
+        val scanMatch = scanRegex.find(aiText)
+        if (scanMatch != null) {
+            val raw = scanMatch.groupValues[1].trim()
+                .replace(Regex("^```(?:json)?\\s*", RegexOption.MULTILINE), "")
+                .replace(Regex("```\\s*$", RegexOption.MULTILINE), "")
+                .trim()
+            try {
+                val jsonObj = org.json.JSONObject(raw)
+                val arr = jsonObj.optJSONArray("ingredients")
+                if (arr != null) {
+                    val ingredients = (0 until arr.length()).map { arr.getString(it) }
+                    Log.d(TAG, "Epicure scan detected: $ingredients")
+                    EpicureRepository.processIngredients(ingredients)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to parse epicure_scan JSON: $raw — ${e.message}")
+            }
+        }
+
+        // ── Epicure recipe from Gemini ───────────────────────────────────
+        val recipeRegex = Regex("<epicure_recipe>(.*?)</epicure_recipe>", RegexOption.DOT_MATCHES_ALL)
+        val recipeMatch = recipeRegex.find(aiText)
+        if (recipeMatch != null) {
+            val recipeText = recipeMatch.groupValues[1].trim()
+            Log.d(TAG, "Epicure recipe received (${recipeText.length} chars)")
+            EpicureRepository.updateRecipeText(recipeText)
         }
     }
 

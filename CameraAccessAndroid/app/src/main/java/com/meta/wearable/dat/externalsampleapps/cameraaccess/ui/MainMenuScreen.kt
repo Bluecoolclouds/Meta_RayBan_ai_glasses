@@ -349,8 +349,9 @@ fun MainMenuScreen(
                         FeatureChip(
                             icon = Icons.Default.Language,
                             iconColor = AppColor.DeepBlue,
-                            title = "Режим готовки",
-                            subtitle = "Рецепты + таймер",
+                            title = "Готовка",
+                            subtitle = "Epicure + рецепты",
+                            onClick = { viewModel.showCooking() },
                         )
                         FeatureChip(
                             icon = Icons.Default.Settings,

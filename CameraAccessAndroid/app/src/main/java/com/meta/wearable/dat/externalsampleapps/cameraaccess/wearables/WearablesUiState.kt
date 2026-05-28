@@ -31,6 +31,7 @@ data class WearablesUiState(
     val isMainMenuVisible: Boolean = false,
     val isDictaphoneVisible: Boolean = false,
     val isCalorieVisible: Boolean = false,
+    val isCookingVisible: Boolean = false,
 ) {
   val isRegistered: Boolean = registrationState is RegistrationState.Registered || hasMockDevices
 }

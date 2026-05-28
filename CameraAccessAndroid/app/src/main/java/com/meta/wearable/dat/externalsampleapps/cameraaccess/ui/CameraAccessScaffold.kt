@@ -56,6 +56,7 @@ import com.meta.wearable.dat.core.types.Permission
 import com.meta.wearable.dat.core.types.PermissionStatus
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.gemini.GeminiConnectionState
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.gemini.GeminiSessionViewModel
+import com.meta.wearable.dat.externalsampleapps.cameraaccess.skills.EpicureRepository
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.skills.SkillManager
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.stream.StreamViewModel
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.wearables.WearablesViewModel
@@ -115,6 +116,17 @@ fun CameraAccessScaffold(
       }
   }
 
+  // Wire Epicure MCP results back into Gemini as pairing context for recipe generation
+  LaunchedEffect(Unit) {
+      EpicureRepository.onMcpResult = { pairingData ->
+          SkillManager.injectMessage?.invoke(
+              "[EPICURE_PAIRINGS] Here is the flavor pairing graph data from the Epicure MCP database:\n\n$pairingData\n\n" +
+              "Use this pairing data to generate a recipe. Explain briefly why these ingredients pair well, " +
+              "then propose 1-2 concrete dish ideas. Emit the full recipe inside <epicure_recipe>...</epicure_recipe> tags."
+          )
+      }
+  }
+
   // Observe camera permission errors and show snackbar
   LaunchedEffect(uiState.recentError) {
     uiState.recentError?.let { errorMessage ->
@@ -129,6 +141,18 @@ fun CameraAccessScaffold(
         uiState.isSettingsVisible ->
             SettingsScreen(
                 onBack = { wearablesVM.hideSettings() },
+            )
+        uiState.isCookingVisible ->
+            CookingScreen(
+                onBack = { wearablesVM.hideCooking() },
+                onScanClick = {
+                    SkillManager.checkActivation("epicure")
+                    SkillManager.refreshSkillVideoWindow()
+                    SkillManager.injectMessage?.invoke(
+                        "[EPICURE_SCAN_REQUEST] The user pressed Scan. Look at the camera now and identify all visible food ingredients. " +
+                        "List each ingredient specifically, then emit <epicure_scan>{\"ingredients\":[...]}</epicure_scan>"
+                    )
+                },
             )
         uiState.isCalorieVisible ->
             CalorieScreen(

@@ -212,6 +212,14 @@ class WearablesViewModel(application: Application) : AndroidViewModel(applicatio
     _uiState.update { it.copy(isCalorieVisible = false, isMainMenuVisible = true) }
   }
 
+  fun showCooking() {
+    _uiState.update { it.copy(isCookingVisible = true, isMainMenuVisible = false) }
+  }
+
+  fun hideCooking() {
+    _uiState.update { it.copy(isCookingVisible = false, isMainMenuVisible = true) }
+  }
+
   fun showDebugMenu() {
     _uiState.update { it.copy(isDebugMenuVisible = true) }
   }
