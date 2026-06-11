@@ -20,7 +20,7 @@ object EpicureRepository {
     private const val TAG = "EpicureRepository"
     private const val MCP_BASE = "https://epicure-mcp.kaikaku.ai/mcp"
 
-    enum class Status { IDLE, SCANNING, FETCHING, READY, ERROR }
+    enum class Status { IDLE, SCANNING, FETCHING, READY, COOKING, DONE, ERROR }
 
     data class State(
         val status: Status = Status.IDLE,
@@ -28,6 +28,9 @@ object EpicureRepository {
         val pairingRaw: String = "",
         val recipeText: String = "",
         val errorMessage: String? = null,
+        val cookingSteps: List<CookingStep> = emptyList(),
+        val currentStepIndex: Int = 0,
+        val stepStartedAt: Long = 0L,
     )
 
     private val _state = MutableStateFlow(State())
@@ -41,6 +44,8 @@ object EpicureRepository {
 
     var onMcpResult: ((String) -> Unit)? = null
 
+    // ── State mutators ───────────────────────────────────────────────────────
+
     fun reset() {
         _state.value = State()
     }
@@ -52,6 +57,44 @@ object EpicureRepository {
     fun updateRecipeText(text: String) {
         _state.update { it.copy(recipeText = text, status = Status.READY) }
     }
+
+    fun startCookingSession(steps: List<CookingStep>) {
+        if (steps.isEmpty()) return
+        Log.d(TAG, "Starting cooking session with ${steps.size} steps")
+        _state.update {
+            it.copy(
+                status = Status.COOKING,
+                cookingSteps = steps,
+                currentStepIndex = 0,
+                stepStartedAt = System.currentTimeMillis(),
+            )
+        }
+    }
+
+    fun advanceStep() {
+        val s = _state.value
+        if (s.status != Status.COOKING) return
+        val next = s.currentStepIndex + 1
+        if (next >= s.cookingSteps.size) {
+            Log.d(TAG, "Cooking session complete")
+            _state.update { it.copy(status = Status.DONE, currentStepIndex = s.cookingSteps.size) }
+        } else {
+            Log.d(TAG, "Advancing to step $next / ${s.cookingSteps.size - 1}")
+            _state.update {
+                it.copy(
+                    currentStepIndex = next,
+                    stepStartedAt = System.currentTimeMillis(),
+                )
+            }
+        }
+    }
+
+    fun currentStep(): CookingStep? {
+        val s = _state.value
+        return s.cookingSteps.getOrNull(s.currentStepIndex)
+    }
+
+    // ── MCP calls ────────────────────────────────────────────────────────────
 
     fun processIngredients(ingredients: List<String>) {
         if (ingredients.isEmpty()) return
@@ -111,7 +154,6 @@ object EpicureRepository {
     }
 
     private fun extractContentText(raw: String): String {
-        // Try SSE format: lines starting with "data:"
         val dataLines = raw.lines()
             .filter { it.startsWith("data:") }
             .map { it.removePrefix("data:").trim() }
@@ -122,11 +164,9 @@ object EpicureRepository {
             if (text != null) return text
         }
 
-        // Try raw JSON
         val text = parseJsonrpcContent(raw.trim())
         if (text != null) return text
 
-        // Fallback: return raw trimmed
         return raw.take(2000)
     }
 

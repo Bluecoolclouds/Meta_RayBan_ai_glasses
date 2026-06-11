@@ -196,9 +196,33 @@ object SkillManager {
             // Don't return true — let Gemini handle the question normally
         }
 
+        // 4. Step advance for active Epicure cooking session
+        val isCookingActive = EpicureRepository.state.value.status == EpicureRepository.Status.COOKING
+        if (isCookingActive &&
+            EpicureSkill.STEP_ADVANCE_PHRASES.any { lower.contains(it) } &&
+            firedThisTurn.add("step_advance")) {
+            EpicureRepository.advanceStep()
+            val newState = EpicureRepository.state.value
+            val step = newState.cookingSteps.getOrNull(newState.currentStepIndex)
+            if (newState.status == EpicureRepository.Status.COOKING && step != null) {
+                val total = newState.cookingSteps.size
+                val stepNum = newState.currentStepIndex + 1
+                val timerNote = if (step.durationMinutes > 0) " (таймер: ${step.durationMinutes} мин.)" else ""
+                injectMessage?.invoke(
+                    "[EPICURE_STEP_ADVANCE] Пользователь готов — переходим к шагу $stepNum из $total: " +
+                        "${step.phase.label} — ${step.instruction}$timerNote. Объяви этот шаг голосом, коротко и по делу."
+                )
+            } else if (newState.status == EpicureRepository.Status.DONE) {
+                injectMessage?.invoke(
+                    "[EPICURE_DONE] Все шаги выполнены! Поздравь пользователя — блюдо готово!"
+                )
+            }
+            return true
+        }
+
         val current = _activeSkill
 
-        // 4. Deactivate current skill
+        // 5. Deactivate current skill
         if (current != null) {
             if (current.deactivationPhrases.any { lower.contains(it) }) {
                 Log.d(TAG, "Deactivating skill: ${current.id}")
@@ -302,6 +326,32 @@ object SkillManager {
             val recipeText = recipeMatch.groupValues[1].trim()
             Log.d(TAG, "Epicure recipe received (${recipeText.length} chars)")
             EpicureRepository.updateRecipeText(recipeText)
+        }
+
+        // ── Epicure cooking steps ────────────────────────────────────────
+        val stepsRegex = Regex("<epicure_steps>(.*?)</epicure_steps>", RegexOption.DOT_MATCHES_ALL)
+        val stepsMatch = stepsRegex.find(aiText)
+        if (stepsMatch != null) {
+            val raw = stepsMatch.groupValues[1].trim()
+                .replace(Regex("^```(?:json)?\\s*", RegexOption.MULTILINE), "")
+                .replace(Regex("```\\s*$", RegexOption.MULTILINE), "")
+                .trim()
+            try {
+                val arr = org.json.JSONArray(raw)
+                val steps = (0 until arr.length()).mapIndexed { i, _ ->
+                    val obj = arr.getJSONObject(i)
+                    CookingStep(
+                        index = i,
+                        phase = cookingPhaseFromString(obj.optString("phase", "PREP")),
+                        instruction = obj.optString("instruction", ""),
+                        durationMinutes = obj.optInt("durationMinutes", 0),
+                    )
+                }
+                Log.d(TAG, "Epicure steps parsed: ${steps.size} steps")
+                EpicureRepository.startCookingSession(steps)
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to parse epicure_steps JSON: ${raw.take(100)} — ${e.message}")
+            }
         }
     }
 
